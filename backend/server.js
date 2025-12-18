@@ -2,6 +2,15 @@ import express from "express";
 import fetch from "node-fetch";
 
 const app = express();
+
+// ✅ GLOBAL CORS (fixes GitHub Pages fetch issues)
+app.use((req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  next();
+});
+
 const cache = {};
 const CACHE_TTL = 30 * 1000;
 
@@ -11,6 +20,12 @@ app.get("/games", async (req, res) => {
   if (!ids) return res.status(400).json({ error: "Missing ids" });
 
   const universeIds = ids.split(",").map(Number);
+  const now = Date.now();
+
+  // ✅ Cache
+  if (cache[ids] && now - cache[ids].time < CACHE_TTL) {
+    return res.json(cache[ids].data);
+  }
 
   try {
     // 1) Game stats
@@ -19,7 +34,11 @@ app.get("/games", async (req, res) => {
     );
     const games = await gamesRes.json();
 
-    // 2) Game thumbnails (CORRECT METHOD)
+    if (!Array.isArray(games.data)) {
+      return res.status(502).json({ error: "Invalid games response" });
+    }
+
+    // 2) Game thumbnails (POST required)
     const thumbsRes = await fetch(
       "https://thumbnails.roblox.com/v1/games/multiget/thumbnails",
       {
@@ -36,23 +55,29 @@ app.get("/games", async (req, res) => {
 
     const thumbs = await thumbsRes.json();
 
-    // map thumbnails
     const thumbMap = {};
-    thumbs.data.forEach(t => {
-      if (t.state === "Completed") {
-        thumbMap[t.targetId] = t.imageUrl;
-      }
-    });
+    if (Array.isArray(thumbs.data)) {
+      thumbs.data.forEach(t => {
+        if (t.state === "Completed") {
+          thumbMap[t.targetId] = t.imageUrl;
+        }
+      });
+    }
 
     // attach thumbnails
     games.data.forEach(g => {
       g.thumbnail = thumbMap[g.id] || null;
     });
 
-    res.set("Access-Control-Allow-Origin", "*");
+    // store cache
+    cache[ids] = {
+      time: now,
+      data: games
+    };
+
     res.json(games);
   } catch (err) {
-    console.error(err);
+    console.error("Games fetch error:", err);
     res.status(500).json({ error: "Failed to fetch games" });
   }
 });
@@ -68,12 +93,12 @@ app.get("/group", async (req, res) => {
     );
     const data = await r.json();
 
-    res.set("Access-Control-Allow-Origin", "*");
     res.json({
       name: data.name,
       members: data.memberCount
     });
-  } catch {
+  } catch (err) {
+    console.error("Group fetch error:", err);
     res.status(500).json({ error: "Failed to fetch group" });
   }
 });

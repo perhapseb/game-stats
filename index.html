@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Game Stats</title>
+  <title>Live Game Stats</title>
   <style>
     body {
       margin: 0;
@@ -12,33 +12,45 @@
       color: white;
     }
 
-    h1 {
+    .totals {
+      display: flex;
+      gap: 2rem;
       margin-bottom: 1.5rem;
+      font-size: 1.1rem;
     }
 
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
       gap: 1rem;
     }
 
     .card {
+      display: flex;
+      gap: 1rem;
       background: #020617;
       border: 1px solid #1e293b;
       border-radius: 14px;
-      padding: 1.25rem;
+      padding: 1rem;
+      align-items: center;
     }
 
-    .title {
-      font-size: 1.1rem;
+    .thumb {
+      width: 72px;
+      height: 72px;
+      border-radius: 12px;
+      object-fit: cover;
+      background: #020617;
+    }
+
+    .name {
       font-weight: 600;
-      margin-bottom: 0.75rem;
+      margin-bottom: 0.25rem;
     }
 
     .stat {
       font-size: 0.9rem;
       opacity: 0.9;
-      margin-top: 0.25rem;
     }
 
     .playing {
@@ -50,36 +62,83 @@
 <body>
   <h1>Live Game Stats</h1>
 
+  <div class="totals">
+    <div>🟢 Total Playing: <span id="totalPlaying">–</span></div>
+    <div>👀 Total Visits: <span id="totalVisits">–</span></div>
+  </div>
+
   <div id="grid" class="grid"></div>
 
   <script>
     const API =
       "https://game-stats-trpi.onrender.com/games?ids=3368675254,3945578236";
 
+    let lastTotals = { playing: 0, visits: 0 };
+
+    function animateNumber(el, from, to) {
+      const start = performance.now();
+      const duration = 600;
+
+      function frame(t) {
+        const p = Math.min((t - start) / duration, 1);
+        const val = Math.floor(from + (to - from) * p);
+        el.textContent = val.toLocaleString();
+        if (p < 1) requestAnimationFrame(frame);
+      }
+      requestAnimationFrame(frame);
+    }
+
     async function loadStats() {
       const res = await fetch(API);
       const json = await res.json();
+
+      if (!json || !Array.isArray(json.data)) return;
+
+      let totalPlaying = 0;
+      let totalVisits = 0;
 
       const grid = document.getElementById("grid");
       grid.innerHTML = "";
 
       json.data.forEach(game => {
+        totalPlaying += game.playing;
+        totalVisits += game.visits;
+
         const card = document.createElement("div");
         card.className = "card";
 
         card.innerHTML = `
-          <div class="title">${game.name}</div>
-          <div class="stat playing">🟢 Playing: ${game.playing.toLocaleString()}</div>
-          <div class="stat">👀 Visits: ${game.visits.toLocaleString()}</div>
-          <div class="stat">⭐ Favorites: ${game.favoritedCount.toLocaleString()}</div>
+          <img class="thumb" src="${game.thumbnail}" />
+          <div>
+            <div class="name">${game.name}</div>
+            <div class="stat playing">🟢 Playing: ${game.playing.toLocaleString()}</div>
+            <div class="stat">👀 Visits: ${game.visits.toLocaleString()}</div>
+            <div class="stat">⭐ Favorites: ${game.favoritedCount.toLocaleString()}</div>
+          </div>
         `;
 
         grid.appendChild(card);
       });
+
+      animateNumber(
+        totalPlayingEl,
+        lastTotals.playing,
+        totalPlaying
+      );
+      animateNumber(
+        totalVisitsEl,
+        lastTotals.visits,
+        totalVisits
+      );
+
+      lastTotals = { playing: totalPlaying, visits: totalVisits };
     }
 
+    const totalPlayingEl = document.getElementById("totalPlaying");
+    const totalVisitsEl = document.getElementById("totalVisits");
+
     loadStats();
-    setInterval(loadStats, 30000); // match backend cache
+    setInterval(loadStats, 30000);
   </script>
 </body>
 </html>

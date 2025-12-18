@@ -10,17 +10,33 @@ app.get("/games", async (req, res) => {
   const ids = req.query.ids;
   if (!ids) return res.status(400).json({ error: "Missing ids" });
 
+  const universeIds = ids.split(",").map(Number);
+
   try {
+    // 1) Game stats
     const gamesRes = await fetch(
       `https://games.roblox.com/v1/games?universeIds=${ids}`
     );
     const games = await gamesRes.json();
 
-    const thumbRes = await fetch(
-      `https://thumbnails.roblox.com/v1/games/multiget/thumbnails?universeIds=${ids}&size=768x432&format=Png&isCircular=false`
+    // 2) Game thumbnails (CORRECT METHOD)
+    const thumbsRes = await fetch(
+      "https://thumbnails.roblox.com/v1/games/multiget/thumbnails",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          universeIds,
+          size: "768x432",
+          format: "Png",
+          isCircular: false
+        })
+      }
     );
-    const thumbs = await thumbRes.json();
 
+    const thumbs = await thumbsRes.json();
+
+    // map thumbnails
     const thumbMap = {};
     thumbs.data.forEach(t => {
       if (t.state === "Completed") {
@@ -28,13 +44,15 @@ app.get("/games", async (req, res) => {
       }
     });
 
+    // attach thumbnails
     games.data.forEach(g => {
       g.thumbnail = thumbMap[g.id] || null;
     });
 
     res.set("Access-Control-Allow-Origin", "*");
     res.json(games);
-  } catch {
+  } catch (err) {
+    console.error(err);
     res.status(500).json({ error: "Failed to fetch games" });
   }
 });

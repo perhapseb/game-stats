@@ -14,15 +14,13 @@ app.use((req, res, next) => {
 const cache = {};
 const CACHE_TTL = 30 * 1000;
 
-// -------- GAMES (stats + thumbnails) --------
+// -------- GAMES (stats + icons) --------
 app.get("/games", async (req, res) => {
   const ids = req.query.ids;
   if (!ids) return res.status(400).json({ error: "Missing ids" });
 
-  const universeIds = ids.split(",").map(Number);
   const now = Date.now();
 
-  // ✅ Cache
   if (cache[ids] && now - cache[ids].time < CACHE_TTL) {
     return res.json(cache[ids].data);
   }
@@ -34,53 +32,34 @@ app.get("/games", async (req, res) => {
     );
     const games = await gamesRes.json();
 
-    if (!Array.isArray(games.data)) {
-      return res.status(502).json({ error: "Invalid games response" });
-    }
-
-    // 2) Game thumbnails (POST required)
-    const thumbsRes = await fetch(
-      "https://thumbnails.roblox.com/v1/games/multiget/thumbnails",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          universeIds,
-          size: "768x432",
-          format: "Png",
-          isCircular: false
-        })
-      }
+    // 2) Game icons (square, reliable)
+    const iconsRes = await fetch(
+      `https://thumbnails.roblox.com/v1/games/icons?universeIds=${ids}&size=256x256&format=Png&isCircular=false`
     );
+    const icons = await iconsRes.json();
 
-    const thumbs = await thumbsRes.json();
-
-    const thumbMap = {};
-    if (Array.isArray(thumbs.data)) {
-      thumbs.data.forEach(t => {
-        if (t.state === "Completed") {
-          thumbMap[t.targetId] = t.imageUrl;
+    const iconMap = {};
+    if (Array.isArray(icons.data)) {
+      icons.data.forEach(i => {
+        if (i.state === "Completed") {
+          iconMap[i.targetId] = i.imageUrl;
         }
       });
     }
 
-    // attach thumbnails
     games.data.forEach(g => {
-      g.thumbnail = thumbMap[g.id] || null;
+      g.icon = iconMap[g.id] || null;
     });
 
-    // store cache
-    cache[ids] = {
-      time: now,
-      data: games
-    };
+    cache[ids] = { time: now, data: games };
 
     res.json(games);
   } catch (err) {
-    console.error("Games fetch error:", err);
+    console.error(err);
     res.status(500).json({ error: "Failed to fetch games" });
   }
 });
+
 
 // -------- GROUP INFO --------
 app.get("/group", async (req, res) => {

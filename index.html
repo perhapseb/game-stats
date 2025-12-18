@@ -30,46 +30,57 @@
       gap: 1.5rem;
     }
 
-    .card {
-      background: linear-gradient(180deg, #020617, #020617);
-      border-radius: 16px;
-      overflow: hidden;
-      cursor: pointer;
-      border: 1px solid #1e293b;
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
+  .card {
+    position: relative;
+    background: linear-gradient(180deg, #020617, #020617);
+    border-radius: 18px;
+    border: 1px solid #1e293b;
+    padding-top: 3rem;
+    padding-bottom: 1.25rem;
+    padding-inline: 1.25rem;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
 
-    .card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 0 0 1px #38bdf8, 0 10px 40px rgba(56,189,248,0.2);
-    }
+  .card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 0 0 1px #38bdf8, 0 12px 40px rgba(56,189,248,0.25);
+  }
 
-    .thumb {
-      width: 100%;
-      height: 180px;
-      object-fit: cover;
-    }
+  .icon {
+    position: absolute;
+    top: -32px;
+    left: 1.25rem;
+    width: 64px;
+    height: 64px;
+    border-radius: 14px;
+    object-fit: cover;
+    background: #020617;
+    border: 2px solid #020617;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+  }
 
-    .content {
-      padding: 1rem;
-    }
+  .name {
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
 
-    .name {
-      font-size: 1.05rem;
-      font-weight: 600;
-      margin-bottom: 0.5rem;
-    }
+  .stat {
+    font-size: 0.9rem;
+    opacity: 0.85;
+    margin-top: 0.25rem;
+  }
 
-    .stat {
-      font-size: 0.9rem;
-      opacity: 0.85;
-      margin-top: 0.2rem;
-    }
+  .playing {
+    color: #22c55e;
+    font-weight: 600;
+  }
 
-    .playing {
-      color: #22c55e;
-      font-weight: 600;
-    }
+  .content {
+    padding: 1rem;
+  }
+
   </style>
 </head>
 <body>
@@ -114,14 +125,16 @@
         card.onclick = () =>
           window.open(`https://www.roblox.com/games/${game.rootPlaceId}`, "_blank");
 
+        const iconHtml = game.icon
+          ? `<img class="icon" src="${game.icon}" />`
+          : `<div class="icon"></div>`;
+
         card.innerHTML = `
-          <img class="thumb" src="${game.thumbnail}" />
-          <div class="content">
-            <div class="name">${game.name}</div>
-            <div class="stat playing">🟢 Playing: ${game.playing.toLocaleString()}</div>
-            <div class="stat">👀 Visits: ${game.visits.toLocaleString()}</div>
-            <div class="stat">⭐ Favorites: ${game.favoritedCount.toLocaleString()}</div>
-          </div>
+          ${iconHtml}
+          <div class="name">${game.name}</div>
+          <div class="stat playing">🟢 Playing: ${game.playing.toLocaleString()}</div>
+          <div class="stat">👀 Visits: ${game.visits.toLocaleString()}</div>
+          <div class="stat">⭐ Favorites: ${game.favoritedCount.toLocaleString()}</div>
         `;
 
         grid.appendChild(card);

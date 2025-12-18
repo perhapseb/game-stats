@@ -3,7 +3,7 @@ import fetch from "node-fetch";
 
 const app = express();
 
-// ✅ GLOBAL CORS (fixes GitHub Pages fetch issues)
+// GLOBAL CORS
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
@@ -14,7 +14,7 @@ app.use((req, res, next) => {
 const cache = {};
 const CACHE_TTL = 30 * 1000;
 
-// -------- GAMES (stats + icons) --------
+// -------- GAMES (stats + ICONS) --------
 app.get("/games", async (req, res) => {
   const ids = req.query.ids;
   if (!ids) return res.status(400).json({ error: "Missing ids" });
@@ -32,7 +32,11 @@ app.get("/games", async (req, res) => {
     );
     const games = await gamesRes.json();
 
-    // 2) Game icons (square, reliable)
+    if (!Array.isArray(games.data)) {
+      return res.status(502).json({ error: "Invalid games response" });
+    }
+
+    // 2) Game icons (THIS WORKS)
     const iconsRes = await fetch(
       `https://thumbnails.roblox.com/v1/games/icons?universeIds=${ids}&size=256x256&format=Png&isCircular=false`
     );
@@ -52,14 +56,12 @@ app.get("/games", async (req, res) => {
     });
 
     cache[ids] = { time: now, data: games };
-
     res.json(games);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to fetch games" });
   }
 });
-
 
 // -------- GROUP INFO --------
 app.get("/group", async (req, res) => {
@@ -76,8 +78,7 @@ app.get("/group", async (req, res) => {
       name: data.name,
       members: data.memberCount
     });
-  } catch (err) {
-    console.error("Group fetch error:", err);
+  } catch {
     res.status(500).json({ error: "Failed to fetch group" });
   }
 });

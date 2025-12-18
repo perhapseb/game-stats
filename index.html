@@ -4,92 +4,192 @@
   <meta charset="UTF-8" />
   <title>Live Game Stats</title>
 
+  <link rel="stylesheet" href="https://fonts.cdnfonts.com/css/builder-sans" />
+
   <style>
+    :root {
+      --bg: #020617;
+      --border: #1e293b;
+      --green: #22c55e;
+      --yellow: #facc15;
+      --red: #ef4444;
+    }
+
+    * { box-sizing: border-box; }
+
     body {
       margin: 0;
       padding: 2rem;
-      font-family: system-ui, sans-serif;
-      background: radial-gradient(ellipse at top, #020617, #020617 40%, #020617);
+      font-family: "Builder Sans", system-ui, sans-serif;
+      background:
+        radial-gradient(1200px 600px at top center, #020617, #000),
+        var(--bg);
       color: white;
     }
 
-    .header {
-      margin-bottom: 2rem;
+    h1 {
+      font-size: 2.75rem;
+      font-weight: 800;
+      margin-bottom: 1.75rem;
     }
+
+    /* ===== TOTALS ===== */
 
     .totals {
       display: flex;
       gap: 2rem;
-      font-size: 1.05rem;
-      opacity: 0.9;
+      padding: 1.25rem 1.75rem;
+      border-radius: 18px;
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid var(--border);
+      margin-bottom: 2.5rem;
+      backdrop-filter: blur(12px);
     }
+
+    .total {
+      font-size: 1.35rem;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* ===== GRID ===== */
 
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
-      gap: 1.5rem;
+      grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+      gap: 2rem;
     }
 
-  .card {
-    position: relative;
-    background: linear-gradient(180deg, #020617, #020617);
-    border-radius: 18px;
-    border: 1px solid #1e293b;
-    padding-top: 3rem;
-    padding-bottom: 1.25rem;
-    padding-inline: 1.25rem;
-    cursor: pointer;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-  }
+    /* ===== CARD ===== */
 
-  .card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 0 0 1px #38bdf8, 0 12px 40px rgba(56,189,248,0.25);
-  }
+    .card {
+      display: flex;
+      gap: 1.5rem;
+      padding: 1.5rem;
+      border-radius: 24px;
+      background: linear-gradient(
+        180deg,
+        rgba(15, 23, 42, 0.95),
+        rgba(2, 6, 23, 0.95)
+      );
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition:
+        transform 0.45s cubic-bezier(.2,.8,.2,1),
+        box-shadow 0.35s ease;
+    }
 
-  .icon {
-    position: absolute;
-    top: -32px;
-    left: 1.25rem;
-    width: 64px;
-    height: 64px;
-    border-radius: 14px;
-    object-fit: cover;
-    background: #020617;
-    border: 2px solid #020617;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.5);
-  }
+    .card:hover {
+      box-shadow:
+        0 0 0 1px rgba(56,189,248,0.6),
+        0 25px 60px rgba(56,189,248,0.25);
+    }
 
-  .name {
-    font-size: 1.05rem;
-    font-weight: 600;
-    margin-bottom: 0.5rem;
-  }
+    .icon {
+      width: 256px;
+      height: 256px;
+      border-radius: 20px;
+      object-fit: cover;
+      border: 1px solid var(--border);
+      flex-shrink: 0;
+    }
 
-  .stat {
-    font-size: 0.9rem;
-    opacity: 0.85;
-    margin-top: 0.25rem;
-  }
+    .content {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      flex: 1;
+    }
 
-  .playing {
-    color: #22c55e;
-    font-weight: 600;
-  }
+    .name {
+      font-size: 2.1rem;
+      font-weight: 800;
+      margin-bottom: 0.75rem;
+    }
 
-  .content {
-    padding: 1rem;
-  }
+    .stats {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
 
+    /* ===== PILL ===== */
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.5rem 0.85rem;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      background: rgba(30, 41, 59, 0.6);
+      border: 1px solid var(--border);
+    }
+
+    .pill.playing { color: var(--green); }
+    .pill.fav { color: var(--yellow); }
+
+    /* ===== LIVE DOT ===== */
+
+    .liveDot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 0 0 rgba(34,197,94,0.8);
+      animation: livePulse 1.6s infinite ease-in-out;
+      flex-shrink: 0;
+    }
+
+    .liveDot.small {
+      width: 8px;
+      height: 8px;
+    }
+
+    @keyframes livePulse {
+      0% { transform: scale(0.8); box-shadow: 0 0 0 0 rgba(34,197,94,0.8); }
+      50% { transform: scale(1); box-shadow: 0 0 0 10px rgba(34,197,94,0); }
+      100% { transform: scale(0.8); box-shadow: 0 0 0 0 rgba(34,197,94,0); }
+    }
+
+    /* ===== PULSE ===== */
+
+    .pulse-up {
+      animation: pulseUp 1.4s ease;
+    }
+
+    .pulse-down {
+      animation: pulseDown 1.4s ease;
+    }
+
+    @keyframes pulseUp {
+      from { box-shadow: 0 0 0 0 rgba(34,197,94,0.6); }
+      to   { box-shadow: 0 0 0 22px rgba(34,197,94,0); }
+    }
+
+    @keyframes pulseDown {
+      from { box-shadow: 0 0 0 0 rgba(239,68,68,0.6); }
+      to   { box-shadow: 0 0 0 22px rgba(239,68,68,0); }
+    }
   </style>
 </head>
+
 <body>
-  <div class="header">
-    <h1>Live Game Stats</h1>
-    <div class="totals">
-      <div>🟢 Playing: <span id="totalPlaying">–</span></div>
-      <div>👀 Visits: <span id="totalVisits">–</span></div>
-      <div>👥 Group Members: <span id="groupMembers">–</span></div>
+  <h1>Live Game Stats</h1>
+
+  <div class="totals">
+    <div class="total">
+      <div class="liveDot"></div>
+      Playing: <span id="totalPlaying">0</span>
+    </div>
+    <div class="total">
+      Plays: <span id="totalPlays">0</span>
+    </div>
+    <div class="total">
+      Group Members: <span id="groupMembers">0</span>
     </div>
   </div>
 
@@ -101,52 +201,153 @@
     const GROUP_API =
       "https://game-stats-trpi.onrender.com/group?id=8938953";
 
+    const grid = document.getElementById("grid");
+    const totalPlayingEl = document.getElementById("totalPlaying");
+    const totalPlaysEl = document.getElementById("totalPlays");
+    const groupMembersEl = document.getElementById("groupMembers");
+
+    const cards = new Map();
+    const totals = { playing: 0, plays: 0 };
+    let groupMembers = 0;
+
+    /* ===== NUMBER + PULSE (FIXED) ===== */
+
+    function animateNumber(el, from, to, pulseEl, threshold) {
+      const diff = Math.abs(to - from);
+      if (diff < threshold) {
+        el.textContent = to.toLocaleString();
+        return;
+      }
+
+      pulseEl.classList.remove("pulse-up", "pulse-down");
+      void pulseEl.offsetWidth; // force reflow
+
+      pulseEl.classList.add(to > from ? "pulse-up" : "pulse-down");
+
+      const start = performance.now();
+      const duration = 1000;
+
+      function tick(now) {
+        const t = Math.min((now - start) / duration, 1);
+        const eased = 1 - Math.pow(1 - t, 3);
+        el.textContent = Math.round(from + (to - from) * eased).toLocaleString();
+        if (t < 1) requestAnimationFrame(tick);
+      }
+
+      requestAnimationFrame(tick);
+    }
+
     async function loadGroup() {
       const r = await fetch(GROUP_API);
       const g = await r.json();
-      groupMembers.textContent = g.members.toLocaleString();
+      animateNumber(groupMembersEl, groupMembers, g.members, groupMembersEl, 10);
+      groupMembers = g.members;
     }
 
     async function loadGames() {
       const r = await fetch(GAMES_API);
       const json = await r.json();
-      if (!json.data) return;
+      if (!Array.isArray(json.data)) return;
 
-      let totalP = 0;
-      let totalV = 0;
-      grid.innerHTML = "";
-
-      json.data.forEach(game => {
-        totalP += game.playing;
-        totalV += game.visits;
-
-        const card = document.createElement("div");
-        card.className = "card";
-        card.onclick = () =>
-          window.open(`https://www.roblox.com/games/${game.rootPlaceId}`, "_blank");
-
-        const iconHtml = game.icon
-          ? `<img class="icon" src="${game.icon}" />`
-          : `<div class="icon"></div>`;
-
-        card.innerHTML = `
-          ${iconHtml}
-          <div class="name">${game.name}</div>
-          <div class="stat playing">🟢 Playing: ${game.playing.toLocaleString()}</div>
-          <div class="stat">👀 Visits: ${game.visits.toLocaleString()}</div>
-          <div class="stat">⭐ Favorites: ${game.favoritedCount.toLocaleString()}</div>
-        `;
-
-        grid.appendChild(card);
+      const firstPositions = new Map();
+      cards.forEach(c => {
+        firstPositions.set(c.card, c.card.getBoundingClientRect());
       });
 
-      totalPlaying.textContent = totalP.toLocaleString();
-      totalVisits.textContent = totalV.toLocaleString();
+      const sorted = [...json.data].sort((a, b) => b.playing - a.playing);
+
+      let totalP = 0;
+      let totalPlays = 0;
+
+      sorted.forEach(game => {
+        totalP += game.playing;
+        totalPlays += game.visits;
+
+        let c = cards.get(game.rootPlaceId);
+
+        if (!c) {
+          const card = document.createElement("div");
+          card.className = "card";
+          card.innerHTML = `
+            <img class="icon" src="${game.icon}">
+            <div class="content">
+              <div class="name">${game.name}</div>
+              <div class="stats">
+                <div class="pill playing">
+                  <div class="liveDot small"></div>
+                  <span class="p">0</span> Playing
+                </div>
+                <div class="pill fav">
+                  ⭐ <span class="f">0</span>
+                </div>
+                <div class="pill">
+                  <span class="v">0</span> Plays
+                </div>
+              </div>
+            </div>
+          `;
+
+          card.onclick = () =>
+            window.open(
+              `https://www.roblox.com/games/${game.rootPlaceId}`,
+              "_blank"
+            );
+
+          grid.appendChild(card);
+
+          c = {
+            card,
+            p: card.querySelector(".p"),
+            f: card.querySelector(".f"),
+            v: card.querySelector(".v"),
+            values: { p: 0, f: 0, v: 0 }
+          };
+
+          cards.set(game.rootPlaceId, c);
+        }
+
+        animateNumber(c.p, c.values.p, game.playing, c.p.parentElement, 5);
+        animateNumber(c.f, c.values.f, game.favoritedCount, c.f.parentElement, 10);
+        animateNumber(c.v, c.values.v, game.visits, c.v.parentElement, 1000);
+
+        c.values = {
+          p: game.playing,
+          f: game.favoritedCount,
+          v: game.visits
+        };
+      });
+
+      sorted.forEach(game => {
+        const c = cards.get(game.rootPlaceId);
+        if (c) grid.appendChild(c.card);
+      });
+
+      cards.forEach(c => {
+        const first = firstPositions.get(c.card);
+        if (!first) return;
+
+        const last = c.card.getBoundingClientRect();
+        const dx = first.left - last.left;
+        const dy = first.top - last.top;
+
+        if (dx || dy) {
+          c.card.style.transform = `translate(${dx}px, ${dy}px)`;
+          c.card.getBoundingClientRect();
+          c.card.style.transform = "";
+        }
+      });
+
+      animateNumber(totalPlayingEl, totals.playing, totalP, totalPlayingEl, 10);
+      animateNumber(totalPlaysEl, totals.plays, totalPlays, totalPlaysEl, 1000);
+
+      totals.playing = totalP;
+      totals.plays = totalPlays;
     }
 
     loadGroup();
     loadGames();
-    setInterval(loadGames, 30000);
+    setInterval(loadGames, 15 * 1000);
+    setInterval(loadGroup, 30 * 1000);
   </script>
 </body>
 </html>

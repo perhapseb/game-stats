@@ -2,56 +2,67 @@ import express from "express";
 import fetch from "node-fetch";
 
 const app = express();
-
-// cache per ids
 const cache = {};
 const CACHE_TTL = 30 * 1000;
 
+// -------- GAMES (stats + thumbnails) --------
 app.get("/games", async (req, res) => {
   const ids = req.query.ids;
-  if (!ids) {
-    return res.status(400).json({ error: "Missing ids" });
-  }
+  if (!ids) return res.status(400).json({ error: "Missing ids" });
 
   const now = Date.now();
-  if (cache[ids] && now - cache[ids].time < CACHE_TTL) {
+  if (cache["games"] && now - cache["games"].time < CACHE_TTL) {
     res.set("Access-Control-Allow-Origin", "*");
-    return res.json(cache[ids].data);
+    return res.json(cache["games"].data);
   }
 
   try {
-    // 1) game stats
     const gamesRes = await fetch(
       `https://games.roblox.com/v1/games?universeIds=${ids}`
     );
-    const gamesJson = await gamesRes.json();
+    const games = await gamesRes.json();
 
-    // 2) thumbnails
-    const thumbsRes = await fetch(
-      `https://thumbnails.roblox.com/v1/games/icons?universeIds=${ids}&size=256x256&format=Png&isCircular=false`
+    const thumbRes = await fetch(
+      `https://thumbnails.roblox.com/v1/games/multiget/thumbnails?universeIds=${ids}&size=768x432&format=Png&isCircular=false`
     );
-    const thumbsJson = await thumbsRes.json();
+    const thumbs = await thumbRes.json();
 
-    // map thumbnails by universeId
     const thumbMap = {};
-    thumbsJson.data.forEach(t => {
-      thumbMap[t.targetId] = t.imageUrl;
+    thumbs.data.forEach(t => {
+      thumbMap[t.universeId] = t.imageUrl;
     });
 
-    // attach thumbnails
-    gamesJson.data.forEach(g => {
+    games.data.forEach(g => {
       g.thumbnail = thumbMap[g.id] || null;
     });
 
-    cache[ids] = {
-      time: now,
-      data: gamesJson
-    };
+    cache["games"] = { time: now, data: games };
 
     res.set("Access-Control-Allow-Origin", "*");
-    res.json(gamesJson);
-  } catch (err) {
-    res.status(500).json({ error: "Failed to fetch Roblox data" });
+    res.json(games);
+  } catch {
+    res.status(500).json({ error: "Failed to fetch games" });
+  }
+});
+
+// -------- GROUP INFO --------
+app.get("/group", async (req, res) => {
+  const groupId = req.query.id;
+  if (!groupId) return res.status(400).json({ error: "Missing group id" });
+
+  try {
+    const r = await fetch(
+      `https://groups.roblox.com/v1/groups/${groupId}`
+    );
+    const data = await r.json();
+
+    res.set("Access-Control-Allow-Origin", "*");
+    res.json({
+      name: data.name,
+      members: data.memberCount
+    });
+  } catch {
+    res.status(500).json({ error: "Failed to fetch group" });
   }
 });
 

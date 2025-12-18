@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<body>
+  <h1 id="name"></h1>
+  <p>Playing: <span id="playing"></span></p>
+  <p>Visits: <span id="visits"></span></p>
+
+  <script>
+    async function load() {
+      const res = await fetch(
+        "https://roblox-proxy.onrender.com/games?ids=2440500124"
+      );
+      const json = await res.json();
+
+      const game = json.data[0];
+
+      name.textContent = game.name;
+      playing.textContent = game.playing;
+      visits.textContent = game.visits;
+    }
+
+    load();
+    setInterval(load, 30000);
+  </script>
+</body>
+</html>

@@ -10,12 +10,6 @@ app.get("/games", async (req, res) => {
   const ids = req.query.ids;
   if (!ids) return res.status(400).json({ error: "Missing ids" });
 
-  const now = Date.now();
-  if (cache["games"] && now - cache["games"].time < CACHE_TTL) {
-    res.set("Access-Control-Allow-Origin", "*");
-    return res.json(cache["games"].data);
-  }
-
   try {
     const gamesRes = await fetch(
       `https://games.roblox.com/v1/games?universeIds=${ids}`
@@ -29,14 +23,14 @@ app.get("/games", async (req, res) => {
 
     const thumbMap = {};
     thumbs.data.forEach(t => {
-      thumbMap[t.universeId] = t.imageUrl;
+      if (t.state === "Completed") {
+        thumbMap[t.targetId] = t.imageUrl;
+      }
     });
 
     games.data.forEach(g => {
       g.thumbnail = thumbMap[g.id] || null;
     });
-
-    cache["games"] = { time: now, data: games };
 
     res.set("Access-Control-Allow-Origin", "*");
     res.json(games);
